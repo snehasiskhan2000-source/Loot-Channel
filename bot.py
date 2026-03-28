@@ -18,13 +18,14 @@ SESSION_STRING = os.environ.get("SESSION_STRING")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", 0)) 
 
 # --- Configuration ---
-MY_CHANNEL_ID = '@lootchannel596' # Make sure to change this!
+MY_CHANNEL_ID = '@lootchannel596' # Make sure to change this to your channel!
 SOURCE_CHANNELS = [
     'MoneySaving_Deals', 
     'btrickdeals', 
     'Loot_shoppingdeals123', 
     'looters_hub', 
-    'Flipshope'
+    'Flipshope', 
+    'me'  # Allows you to test the bot by sending links in "Saved Messages"
 ]
 
 # --- Global State ---
@@ -36,6 +37,7 @@ db = mongo_client.deal_bot
 posted_deals = db.posted_deals
 
 # --- Initialize Telegram Userbot ---
+# Created globally so it binds to the main event loop automatically
 app = Client(
     "my_interceptor",
     session_string=SESSION_STRING,
@@ -191,31 +193,41 @@ async def start_web_server():
     runner = web.AppRunner(app_web)
     await runner.setup()
     
-    # Render dynamically assigns a port, this grabs it perfectly
+    # Grabs Render's dynamic port assignment
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
     print(f"Web server running on port {port} for Render health check.")
 
-# --- Master Boot Sequence ---
-async def main():
+# --- Background Task Loader ---
+async def startup_tasks():
+    # 1. Start Scheduler
     scheduler = AsyncIOScheduler(timezone=pytz.timezone('Asia/Kolkata'))
     scheduler.add_job(wipe_database_at_3am, 'cron', hour=3, minute=0)
     scheduler.start()
+    print("Scheduler armed for 3:00 AM IST wipes.")
     
+    # 2. Start Web Server
     await start_web_server()
     
-    print("Starting Telegram interceptor...")
-    await app.start()
-    
+    # 3. Send "Live" test message
     try:
+        # Give the bot a second to fully authenticate before sending
+        await asyncio.sleep(2)
         await app.send_message(MY_CHANNEL_ID, "Live🔥")
         print("Startup message sent to channel.")
     except Exception as e:
         print(f"Could not send startup message: {e}")
-    
-    await idle()
-    await app.stop()
 
+# --- Master Boot Sequence ---
 if __name__ == "__main__":
-    asyncio.run(main())
+    print("Starting Telegram interceptor...")
+    
+    # Grab the main event loop
+    loop = asyncio.get_event_loop()
+    
+    # Schedule our background tasks to run concurrently with Pyrogram
+    loop.create_task(startup_tasks())
+    
+    # Let Pyrogram take over the main loop (Handles start, idle, and disconnect cleanly)
+    app.run()

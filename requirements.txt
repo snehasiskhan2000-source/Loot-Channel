@@ -1,0 +1,7 @@
+pyrofork>=2.3.69
+motor
+httpx
+APScheduler
+pytz
+tgcrypto
+aiohttp

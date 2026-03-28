@@ -18,12 +18,12 @@ SESSION_STRING = os.environ.get("SESSION_STRING")
 ADMIN_ID = int(os.environ.get("ADMIN_ID", 0)) 
 
 # --- Configuration ---
-MY_CHANNEL_ID = '@YourAwesomeDeals' # Make sure to change this!
+MY_CHANNEL_ID = '@lootchannel596' # Make sure to change this!
 SOURCE_CHANNELS = [
-    'dealblast', 
-    'indiafreestuffin', 
-    'bigtricksin', 
-    'GoPaisaDeals', 
+    'MoneySaving_Deals', 
+    'btrickdeals', 
+    'Loot_shoppingdeals123', 
+    'looters_hub', 
     'Flipshope'
 ]
 
